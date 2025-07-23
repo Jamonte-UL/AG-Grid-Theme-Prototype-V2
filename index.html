@@ -255,8 +255,13 @@
           suppressMovable: true,
           resizable: false,
           suppressHeaderMenuButton: true,
-          // If you want this checkbox column also hidden from tool panel:
-          // suppressToolPanel: true,
+          suppressToolPanel: true,
+          suppressColumnsToolPanel: true,
+          hide: true, // Hide from columns panel
+          lockPosition: true, // Lock position so it can't be moved
+          lockVisible: true, // Prevent it from being shown/hidden
+          headerName: '', // Empty header name
+          colId: 'checkbox1', // Giving it a colId can help with identification
         },
         {
           // This seems to be a duplicate checkbox column from your original code.
@@ -267,8 +272,13 @@
           suppressMovable: true,
           resizable: false,
           suppressHeaderMenuButton: true,
-          // If you want this checkbox column also hidden from tool panel:
-          // suppressToolPanel: true,
+          suppressToolPanel: true,
+          suppressColumnsToolPanel: true,
+          hide: true, // Hide from columns panel
+          lockPosition: true, // Lock position so it can't be moved
+          lockVisible: true, // Prevent it from being shown/hidden
+          headerName: '', // Empty header name
+          colId: 'checkbox2', // Giving it a colId can help with identification
         },
         {
           field: 'fileNo',
@@ -328,7 +338,10 @@
           width: 80,
           cellRenderer: ActionMenuCellRenderer,
           suppressHeaderMenuButton: true,
-          suppressToolPanel: true, // THIS IS THE KEY: It should now effectively hide this column from the tool panel
+          suppressToolPanel: true, // This hides the column from the columns tool panel
+          suppressColumnsToolPanel: true, // Additional property to ensure it's hidden
+          hiddenByDefault: true, // Hides column in the column chooser
+          lockVisible: true, // Prevents the column from being hidden/shown through the column chooser
           sortable: false,
           filter: false,
           resizable: false,
@@ -356,6 +369,18 @@
               labelKey: 'columns',
               iconKey: 'columns',
               toolPanel: 'agColumnsToolPanel',
+              // Configure column tool panel to exclude certain columns
+              columnsToolPanel: {
+                suppressRowGroups: true,
+                suppressValues: true,
+                suppressPivots: true,
+                suppressPivotMode: true,
+                // Filter out columns that don't have a field or have checkboxSelection
+                columnFilterFunc: (column) => {
+                  return !(column.getColDef().checkboxSelection) && 
+                         column.getColDef().field !== 'action';
+                }
+              },
             },
           ],
           defaultToolPanel: 'filters',
