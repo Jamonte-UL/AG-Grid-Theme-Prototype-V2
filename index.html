@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AG-Grid 33 – Quartz Theme (minimal working demo)</title>
+
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: 'Open Sans', sans-serif; /* Apply font to body */
+      }
+      #myGrid {
+        height: 100%;
+        width: 100%;
+      }
+      .action-menu-container {
+        position: relative;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .menu-icon {
+        cursor: pointer;
+        font-size: 20px;
+        color: #333;
+      }
+      .action-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: #fff;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        z-index: 1000;
+        min-width: 120px;
+        display: none;
+        border-radius: 8px; /* Added rounded corners */
+        overflow: hidden; /* Ensures content respects rounded corners */
+      }
+      .action-menu.show {
+        display: block;
+      }
+      .action-menu-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .action-menu-item:hover {
+        background: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="myGrid" class="ag-theme-quartz"></div>
+
+    <script type="module">
+      // ---------- Action-menu cell-renderer (moved before oldColumnDefs) ----------
+      class ActionMenuCellRenderer {
+        init(params) {
+          this.params = params;
+          this.eGui = document.createElement('div');
+          this.eGui.className = 'action-menu-container';
+
+          this.eMenuIcon = document.createElement('span');
+          this.eMenuIcon.className = 'material-icons menu-icon';
+          this.eMenuIcon.textContent = 'more_vert';
+          this.eGui.appendChild(this.eMenuIcon);
+
+          this.eMenu = document.createElement('ul');
+          this.eMenu.className = 'action-menu';
+          this.eGui.appendChild(this.eMenu);
+
+          ['View Details', 'Delete', 'Preview'].forEach((label) => {
+            const li = document.createElement('li');
+            li.className = 'action-menu-item';
+            li.textContent = label;
+            li.addEventListener('click', (e) => {
+              e.stopPropagation();
+              // Changed alert() to console.log() for better web app practice
+              console.log(
+                `Action: ${label} on File No: ${params.data.fileNo || 'N/A'}`
+              );
+              this.eMenu.classList.remove('show');
+            });
+            this.eMenu.appendChild(li);
+          });
+
+          document.addEventListener('click', (e) => {
+            if (
+              !this.eGui.contains(e.target) &&
+              this.eMenu.classList.contains('show')
+            ) {
+              this.eMenu.classList.remove('show');
+            }
+          });
+        }
+        getGui() {
+          return this.eGui;
+        }
+        refresh() {
+          return false;
+        }
+      }
+
+      // ------------------------------------------------------------------
+      // START: Content that was originally in old-column-defs.js
+      // This array now includes the 'action' column as you provided.
+      // ------------------------------------------------------------------
+      window.oldColumnDefs = [
+        {
+          field: 'action', // <-- The 'action' column from your old-column-defs.js
+          headerName: 'Actions123',
+          width: 80,
+          cellRenderer: ActionMenuCellRenderer, // Assuming ActionMenuCellRenderer is globally accessible or imported here
+          suppressHeaderMenuButton: true,
+          suppressToolPanel: true,
+          sortable: false,
+          filter: false,
+          resizable: false,
+          editable: false,
+        },
+        // Add any other legacy columns that were in your old-column-defs.js here
+        // For example:
+        // { field: 'legacyId', headerName: 'Legacy ID' },
+        // { field: 'legacyName', headerName: 'Legacy Name' },
+      ];
+      // ------------------------------------------------------------------
+      // END: Content from old-column-defs.js
+      // ------------------------------------------------------------------
+
+      // ---------- 1. Import AG Grid modules ----------
+      import {
+        themeQuartz,
+        createGrid,
+        ModuleRegistry,
+        AllCommunityModule,
+      } from 'ag-grid-community';
+      import {
+        MasterDetailModule,
+        SideBarModule,
+        ColumnsToolPanelModule,
+        FiltersToolPanelModule,
+      } from 'ag-grid-enterprise';
+
+      // ---------- Register AG Grid modules ----------
+      ModuleRegistry.registerModules([
+        AllCommunityModule,
+        MasterDetailModule,
+        SideBarModule,
+        ColumnsToolPanelModule,
+        FiltersToolPanelModule,
+      ]);
+
+      // ---------- 2. Custom Quartz theme ----------
+      const myTheme = themeQuartz.withParams({
+        accentColor: '#005999',
+        borderColor: '#D3D3D3',
+        cellEditingBorder: true,
+        fontFamily: { googleFont: 'Open Sans' },
+        foregroundColor: '#3E3E3E',
+        headerBackgroundColor: '#FFFFFF',
+        inputFocusBorder: true,
+        invalidColor: '#E12D3D',
+        oddRowBackgroundColor: '#F8F8F8',
+        rangeSelectionBorderColor: '#0A99FF',
+        rowHoverColor: '#0A99FF14',
+        selectedRowBackgroundColor: '#0A99FF33',
+        sideBarBackgroundColor: '#FFFFFF',
+        sideButtonSelectedUnderlineColor: '#005999',
+        tabSelectedUnderlineColor: '#005999',
+        tooltipBackgroundColor: '#FFFFFF',
+      });
+
+      // ---------- 4. Sample data ----------
+      const rowData = [
+        {
+          fileNo: 'F-001',
+          contentTypes: 'Document',
+          projectNumber: 'PROJ-XYZ-123',
+          volume: 1,
+          section: 'A',
+          issuedDate: '2023-01-15',
+          modifiedDate: '2023-01-20',
+          details: [
+            { revision: 'R0', author: 'John Doe', notes: 'Initial draft' },
+            {
+              revision: 'R1',
+              author: 'Jane Smith',
+              notes: 'Reviewed and updated',
+            },
+          ],
+        },
+        {
+          fileNo: 'F-002',
+          contentTypes: 'Image',
+          projectNumber: 'PROJ-ABC-456',
+          volume: 2,
+          section: 'B',
+          issuedDate: '2023-02-10',
+          modifiedDate: '2023-02-15',
+          details: [
+            { revision: 'V1', author: 'Mike Ross', notes: 'Photo upload' },
+          ],
+        },
+        {
+          fileNo: 'F-003',
+          contentTypes: 'Spreadsheet',
+          projectNumber: 'PROJ-XYZ-123',
+          volume: 1,
+          section: 'C',
+          issuedDate: '2023-03-01',
+          modifiedDate: '2023-03-05',
+          details: [],
+        },
+        {
+          fileNo: 'F-004',
+          contentTypes: 'PDF',
+          projectNumber: 'PROJ-DEF-789',
+          volume: 3,
+          section: 'D',
+          issuedDate: '2023-04-01',
+          modifiedDate: '2023-04-02',
+          details: [{ revision: 'A', author: 'Wendy Lee', notes: 'Final PDF' }],
+        },
+      ];
+
+      // ---------- 5. Column Definitions ----------
+      // Get legacy columns, but FILTER OUT any 'action' column
+      // This ensures your specific 'action' column definition below is the one used.
+      const legacyCols = (window.oldColumnDefs || []).filter(
+        (col) => col.field !== 'action'
+      );
+
+      const columnDefs = [
+        {
+          // First checkbox column
+          checkboxSelection: true,
+          headerCheckboxSelection: true,
+          maxWidth: 40,
+          suppressMovable: true,
+          resizable: false,
+          suppressHeaderMenuButton: true,
+          suppressToolPanel: true,
+          suppressColumnsToolPanel: true,
+          lockPosition: true, // Lock position so it can't be moved
+          lockVisible: true, // Prevent it from being shown/hidden
+          headerName: '', // Empty header name
+          colId: 'checkbox1', // Giving it a colId can help with identification
+        },
+        {
+          // This seems to be a duplicate checkbox column from your original code.
+          // You likely only need one. Consider removing one of these two checkbox definitions.
+          checkboxSelection: true,
+          headerCheckboxSelection: true,
+          width: 40,
+          suppressMovable: true,
+          resizable: false,
+          suppressHeaderMenuButton: true,
+          suppressToolPanel: true,
+          suppressColumnsToolPanel: true,
+          lockPosition: true, // Lock position so it can't be moved
+          lockVisible: true, // Prevent it from being shown/hidden
+          headerName: '', // Empty header name
+          colId: 'checkbox2', // Giving it a colId can help with identification
+        },
+        {
+          field: 'fileNo',
+          headerName: 'File No',
+          cellRenderer: 'agGroupCellRenderer',
+          minWidth: 120,
+        },
+        // Spread the filtered legacy columns here. The 'action' column will NOT be included from here.
+        ...legacyCols,
+        {
+          field: 'contentTypes',
+          headerName: 'Content Types',
+          minWidth: 150,
+          filter: 'agTextColumnFilter',
+        },
+        {
+          field: 'projectNumber',
+          headerName: 'Project Number',
+          editable: true,
+          minWidth: 150,
+        },
+        {
+          field: 'volume',
+          headerName: 'Volume',
+          minWidth: 120,
+          editable: true,
+          type: 'numericColumn',
+          floatingFilter: true,
+        },
+        {
+          field: 'section',
+          headerName: 'Section',
+          minWidth: 120,
+          floatingFilter: true,
+        },
+        {
+          field: 'issuedDate',
+          headerName: 'Issued Date',
+          minWidth: 120,
+          filter: 'agDateColumnFilter',
+          floatingFilter: true,
+          valueFormatter: (p) =>
+            p.value ? new Date(p.value).toLocaleDateString('en-US') : '',
+        },
+        {
+          field: 'modifiedDate',
+          headerName: 'Modified Date',
+          minWidth: 120,
+          filter: 'agDateColumnFilter',
+          floatingFilter: true,
+          valueFormatter: (p) =>
+            p.value ? new Date(p.value).toLocaleDateString('en-US') : '',
+        },
+        {
+          field: 'action',
+          headerName: 'Actions', // This will be the header name shown in the grid
+          width: 80,
+          cellRenderer: ActionMenuCellRenderer,
+          suppressHeaderMenuButton: true,
+          suppressToolPanel: true, // This hides the column from the columns tool panel
+          suppressColumnsToolPanel: true, // Additional property to ensure it's hidden
+          hiddenByDefault: true, // Hides column in the column chooser
+          lockVisible: true, // Prevents the column from being hidden/shown through the column chooser
+          sortable: false,
+          filter: false,
+          resizable: false,
+          editable: false,
+        },
+      ];
+
+      // ---------- 6. Grid options ----------
+      const gridOptions = {
+        theme: myTheme,
+        rowData,
+        columnDefs,
+        sideBar: {
+          toolPanels: [
+            {
+              id: 'filters',
+              labelDefault: 'Filters',
+              labelKey: 'filters',
+              iconKey: 'filter',
+              toolPanel: 'agFiltersToolPanel',
+            },
+            {
+              id: 'columns',
+              labelDefault: 'Columns',
+              labelKey: 'columns',
+              iconKey: 'columns',
+              toolPanel: 'agColumnsToolPanel',
+              // Configure column tool panel to exclude certain columns
+              columnsToolPanel: {
+                suppressRowGroups: true,
+                suppressValues: true,
+                suppressPivots: true,
+                suppressPivotMode: true,
+                // Filter out columns that don't have a field or have checkboxSelection
+                columnFilterFunc: (column) => {
+                  return !(column.getColDef().checkboxSelection) && 
+                         column.getColDef().field !== 'action';
+                }
+              },
+            },
+          ],
+          defaultToolPanel: 'filters',
+          position: 'left',
+        },
+        masterDetail: true,
+        isRowMaster: (data) => data?.details?.length > 0,
+        detailCellRendererParams: {
+          detailGridOptions: {
+            columnDefs: [
+              { field: 'revision', headerName: 'Revision' },
+              { field: 'author', headerName: 'Author' },
+              { field: 'notes', headerName: 'Notes', flex: 2 },
+            ],
+            defaultColDef: { flex: 1 },
+          },
+          getDetailRowData: (params) =>
+            params.successCallback(params.data.details),
+        },
+        pagination: true,
+        paginationPageSize: 20,
+        cacheBlockSize: 10,
+        rowSelection: 'multiple',
+        defaultColDef: {
+          flex: 1,
+          filter: true,
+          sortable: true,
+          resizable: true,
+          suppressHeaderMenuButton: true,
+        },
+        animateRows: true,
+        onFirstDataRendered: (params) =>
+          setTimeout(
+            () => params.api.getDisplayedRowAtIndex(0)?.setExpanded(true),
+            0
+          ),
+      };
+
+      // ---------- 7. Create grid ----------
+      createGrid(document.getElementById('myGrid'), gridOptions);
+    </script>
+  </body>
+</html>
